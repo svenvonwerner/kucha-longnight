@@ -1,5 +1,5 @@
 <template>
-  <h1>Kucha – Lange Nacht der Wissenschaften Test 2 Geprüft 1</h1>
+  <h1>Kucha – Lange Nacht der Wissenschaften Test-2 Geprüft 2</h1>
 </template>
 
 <script>
