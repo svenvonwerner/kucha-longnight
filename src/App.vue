@@ -1,5 +1,18 @@
 <template>
-  <h1>Kucha – Lange Nacht der Wissenschaften Test-2 Geprüft 2</h1>
+  <v-app>
+    <v-container fluid class="bg-grey-lighten-1 fill-height pa-4">
+      <v-row no-gutters class="fill-height">
+        <v-col cols="2" class="bg-grey-lighten-4">
+          <v-btn>Button</v-btn>
+          <v-combobox
+            label="Combobox"
+            :items="['One', 'Two', 'Three']"
+          ></v-combobox>
+        </v-col>
+        <v-col cols="10" class="bg-grey-lighten-3">Content </v-col>
+      </v-row>
+    </v-container>
+  </v-app>
 </template>
 
 <script>
@@ -7,19 +20,13 @@ import HelloWorld from "./components/HelloWorld.vue";
 
 export default {
   name: "App",
+
   components: {
     HelloWorld,
   },
+
+  data: () => ({
+    //
+  }),
 };
 </script>
-
-<style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
-</style>
