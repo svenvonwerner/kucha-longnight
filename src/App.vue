@@ -9,7 +9,9 @@
             :items="['One', 'Two', 'Three']"
           ></v-combobox>
         </v-col>
-        <v-col cols="10" class="bg-grey-lighten-3">Content </v-col>
+        <v-col cols="10" class="bg-grey-lighten-3">
+          <div id="openseadragon">Content</div>
+        </v-col>
       </v-row>
     </v-container>
   </v-app>
