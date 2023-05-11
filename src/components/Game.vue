@@ -17,6 +17,7 @@
 
 <script>
 import OpenSeadragon from "openseadragon";
+import { getGames } from "@/services/repository";
 
 export default {
   data: () => ({}),
@@ -37,6 +38,13 @@ export default {
     };
     options["showNavigationControl"] = true;
     this.imageViewer = OpenSeadragon(options);
+    getGames()
+      .then((res) => {
+        console.log("Games are:", res);
+      })
+      .catch((err) => {
+        console.log("error!", err.response);
+      });
   },
 };
 </script>
