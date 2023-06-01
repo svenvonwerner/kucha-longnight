@@ -25,17 +25,16 @@ import SelectorPack from "../../static/annotorious-selector-pack.min.js";
 import "../../static/annotorious.min.css";
 
 export default {
-  data: () => ({
-    data() {
-      return {
-        imageViewer: null,
-        annotoriousplugin: null,
-        gameData: [],
-        selectedGame: null,
-        selectedLevel: null,
-      };
-    },
-  }),
+  data() {
+    return {
+      imageViewer: null,
+      annotoriousplugin: null,
+      gameData: [],
+      selectedGame: null,
+      selectedLevel: null,
+    };
+  },
+
   mounted() {
     let options = {
       id: "openseadragon",
