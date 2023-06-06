@@ -1,6 +1,5 @@
 <template>
-  <div class="bg-transparent text-h1 text-center" v-html="getTitle"></div>
-
+  <div class="bg-transparent headline text-center" v-html="getTitle"></div>
   <v-container fluid class="bg-grey-lighten-1 fill-height pa-4">
     <v-row no-gutters class="fill-height">
       <v-col cols="4" class="bg-grey-lighten-4">
@@ -14,12 +13,23 @@
             <v-icon @click="clear()">mdi-restart</v-icon>
           </template>
         </v-combobox>
-        <v-card-text>
+
+        <v-card-text class="">
           {{ selectedGame === null ? "" : selectedGame.value.description }}
         </v-card-text>
+        <v-list v-if="gameData.length > 0">
+          <div v-for="(value, name, index) in statistics" :key="index">
+            <v-list-item-title>{{ "Level " + name }}</v-list-item-title>
+            <v-list-item-group :value="true">
+              <v-list-item v-html="getRights(value)"> </v-list-item>
+              <v-list-item v-html="getFails(value)"> </v-list-item>
+            </v-list-item-group>
+          </div>
+        </v-list>
       </v-col>
+
       <v-col cols="8" class="d-flex bg-grey-lighten-3">
-        <div class="align-stretch flex-grow-1" id="openseadragon">Content</div>
+        <div class="align-stretch flex-grow-1" id="openseadragon"></div>
       </v-col>
     </v-row>
   </v-container>
@@ -39,104 +49,9 @@ export default {
       annotoriousplugin: null,
       gameData: [],
       selectedGame: null,
-      selectedLevel: null,
+      drag: false,
+      lastDown: 0,
     };
-  },
-
-  mounted() {
-    let options = {
-      id: "openseadragon",
-      prefixUrl:
-        "https://cdn.jsdelivr.net/npm/openseadragon@2.4/build/openseadragon/images/",
-      showRotationControl: true,
-      showFlipControl: true,
-      maxZoomLevel: 100,
-      visibilityRatio: 1.0,
-      defaultZoomLevel: 0,
-      minZoomLevel: 0.001,
-      loadTilesWithAjax: true,
-    };
-    options["showNavigationControl"] = true;
-    this.imageViewer = OpenSeadragon(options);
-    var MyHighlightFormatter = function (annotation) {
-      if (annotation.motivation === "highlight") {
-        return {
-          style:
-            "stroke-width:5px;stroke: gold; fill: rgba(0, 128, 0,0.55);vector-effect: none;cursor: auto;",
-        };
-      } else {
-        return {
-          style:
-            "stroke-width:0px;stroke: gold; fill: rgba(0, 128, 0,0);vector-effect: none;cursor: auto;",
-        };
-      }
-    };
-    var config = {};
-    config["readOnly"] = true;
-    (config["disableSelect"] = true),
-      (config["disableEditor"] = true),
-      (config["widgets"] = [
-        "COMMENT",
-        { widget: "TAG", vocabulary: [], showDelete: false },
-      ]);
-    config["image"] = this.imageViewer;
-    config["formatter"] = [MyHighlightFormatter];
-    this.annotoriousplugin = Annotorious(this.imageViewer, config);
-    SelectorPack(this.annotoriousplugin);
-    var _self = this;
-    this.imageViewer.setControlsEnabled(true);
-    this.imageViewer.setMouseNavEnabled(true);
-    //this.annotoriousplugin.disableEditor = true
-    this.annotoriousplugin.on("clickAnnotation", function (annotation, evt) {
-      if ((annotation.motivation = "hide")) {
-        annotation.motivation = "highlight";
-      }
-      _self.annotoriousplugin.format(annotation);
-    });
-
-    getGames()
-      .then((res) => {
-        console.log("data recieved:", res);
-        console.log("statistics stored:", this.statistics);
-        this.gameData = [];
-        for (var level of res.data) {
-          var newLevel = {
-            text: "Level " + level.gameID,
-            title: "Level " + level.gameID,
-            value: level,
-          };
-          let annotations = [];
-          let annotationIDs = [];
-          for (let anno of level.annotations) {
-            if (!annotationIDs.includes(anno.annotoriousID)) {
-              annotationIDs.push(anno.annotoriousID);
-              annotations.push(anno);
-            }
-          }
-          level.annotations = annotations;
-          console.log("annos after kicking out doubles: ", annotationIDs);
-          if (!this.statistics[newLevel.value.gameID]) {
-            this.statistics[newLevel.value.gameID] = {
-              fails: 0,
-              number: newLevel.value.annotations.length,
-              annotations: [],
-            };
-          } else {
-            this.statistics[newLevel.value.gameID].number =
-              newLevel.value.annotations.length;
-          }
-          this.gameData.push(newLevel);
-        }
-      })
-      .catch((err) => {
-        console.log("error!", err);
-      });
-  },
-  watch: {
-    selectedGame(newVal, oldVal) {
-      console.log("new game selected", newVal.value);
-      this.loadLevel(newVal);
-    },
   },
   computed: {
     getTitle() {
@@ -197,6 +112,148 @@ export default {
       }
       this.loadLevel(this.selectedGame);
     },
+    getRights(item) {
+      console.log("item", item);
+      if (item) {
+        return (
+          "<span style='color:green;'>Gefunden: " +
+          item.annotations.length +
+          "/" +
+          item.number +
+          "</span>"
+        );
+      } else {
+        return "";
+      }
+    },
+    getFails(item) {
+      console.log("item", item);
+      if (item) {
+        return "<span style='color:red;'>Daneben: " + item.fails + "</span>";
+      } else {
+        return "";
+      }
+    },
+  },
+  mounted() {
+    let options = {
+      id: "openseadragon",
+      prefixUrl:
+        "https://cdn.jsdelivr.net/npm/openseadragon@2.4/build/openseadragon/images/",
+      showRotationControl: true,
+      showFlipControl: true,
+      maxZoomLevel: 100,
+      visibilityRatio: 1.0,
+      defaultZoomLevel: 0,
+      minZoomLevel: 0.001,
+      loadTilesWithAjax: true,
+    };
+    options["showNavigationControl"] = true;
+    this.imageViewer = OpenSeadragon(options);
+    var MyHighlightFormatter = function (annotation) {
+      if (annotation.motivation === "highlight") {
+        return {
+          style:
+            "stroke-width:5px;stroke: gold; fill: rgba(0, 128, 0,0.55);vector-effect: none;cursor: auto;",
+        };
+      } else {
+        return {
+          style:
+            "stroke-width:0px;stroke: gold; fill: rgba(0, 128, 0,0);vector-effect: none;cursor: auto;",
+        };
+      }
+    };
+    var config = {};
+    config["readOnly"] = true;
+    (config["disableSelect"] = true),
+      (config["disableEditor"] = true),
+      (config["widgets"] = [
+        "COMMENT",
+        { widget: "TAG", vocabulary: [], showDelete: false },
+      ]);
+    config["image"] = this.imageViewer;
+    config["formatter"] = [MyHighlightFormatter];
+    this.annotoriousplugin = Annotorious(this.imageViewer, config);
+    SelectorPack(this.annotoriousplugin);
+    var _self = this;
+    this.imageViewer.setControlsEnabled(true);
+    this.imageViewer.setMouseNavEnabled(true);
+    this.imageViewer.gestureSettingsMouse.clickToZoom = false;
+    this.imageViewer.addHandler("canvas-press", () => {
+      _self.lastDown = new Date().getTime();
+    });
+    this.imageViewer.addHandler("canvas-click", (e) => {
+      const timeSinceMouseDown = new Date().getTime() - _self.lastDown;
+      // Real click (no drag)
+      console.log(timeSinceMouseDown);
+      if (timeSinceMouseDown < 250) {
+        _self.statistics[_self.selectedGame.value.gameID].fails += 1;
+      }
+    });
+
+    this.annotoriousplugin.on("clickAnnotation", function (annotation, evt) {
+      console.log("anno clicked! ", annotation);
+      if (annotation.motivation === "hide") {
+        console.log("found anno!", annotation);
+        annotation.motivation = "highlight";
+        _self.statistics[_self.selectedGame.value.gameID].fails -= 1;
+        _self.statistics[_self.selectedGame.value.gameID].annotations.push(
+          annotation.id
+        );
+        _self.annotoriousplugin.format(annotation);
+      }
+    });
+
+    getGames()
+      .then((res) => {
+        console.log("data recieved:", res);
+        console.log("statistics stored:", this.statistics);
+        this.gameData = [];
+        for (var level of res.data) {
+          var newLevel = {
+            text: "Level " + level.gameID,
+            title: "Level " + level.gameID,
+            value: level,
+          };
+          let annotations = [];
+          let annotationIDs = [];
+          for (let anno of level.annotations) {
+            if (!annotationIDs.includes(anno.annotoriousID)) {
+              annotationIDs.push(anno.annotoriousID);
+              annotations.push(anno);
+            }
+          }
+          level.annotations = annotations;
+          console.log("annos after kicking out doubles: ", annotationIDs);
+          if (!this.statistics[newLevel.value.gameID]) {
+            this.statistics[newLevel.value.gameID] = {
+              fails: 0,
+              number: newLevel.value.annotations.length,
+              annotations: [],
+            };
+          } else {
+            this.statistics[newLevel.value.gameID].number =
+              newLevel.value.annotations.length;
+          }
+          this.gameData.push(newLevel);
+        }
+      })
+      .catch((err) => {
+        console.log("error!", err);
+      });
+  },
+  watch: {
+    selectedGame(newVal, oldVal) {
+      console.log("new game selected", newVal.value);
+      this.loadLevel(newVal);
+    },
   },
 };
 </script>
+
+<style>
+.headline {
+  font-size: 2em;
+  padding: 0.5em;
+}
+</style>
