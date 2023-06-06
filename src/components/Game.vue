@@ -2,30 +2,36 @@
   <div class="bg-transparent headline text-center" v-html="getTitle"></div>
   <v-container fluid class="bg-grey-lighten-1 fill-height pa-4">
     <v-row no-gutters class="fill-height">
-      <v-col cols="4" class="bg-grey-lighten-4">
+      <v-col cols="4" class="bg-grey-lighten-4 pa-3">
         <v-combobox
           v-model="selectedGame"
           :items="gameData"
           :return-object="true"
           label="Level wählen"
+          variant="solo-inverted"
         >
+        </v-combobox>
+
+        <v-card class="pa-4" elevation="2">
+          <v-card-text class="">
+            {{ selectedGame === null ? "" : selectedGame.value.description }}
+          </v-card-text>
+          <v-list v-if="gameData.length > 0">
+            <div v-for="(value, name, index) in statistics" :key="index">
+              <v-list-item-title>{{ "Level " + name }}</v-list-item-title>
+              <v-list-item-group :value="true">
+                <v-list-item v-html="getRights(value)"> </v-list-item>
+                <v-list-item v-html="getFails(value)"> </v-list-item>
+              </v-list-item-group>
+            </div>
+          </v-list>
+        </v-card>
+
+        <v-btn class="my-5" block size="x-large">
           <template v-slot:append>
             <v-icon @click="clear()">mdi-restart</v-icon>
           </template>
-        </v-combobox>
-
-        <v-card-text class="">
-          {{ selectedGame === null ? "" : selectedGame.value.description }}
-        </v-card-text>
-        <v-list v-if="gameData.length > 0">
-          <div v-for="(value, name, index) in statistics" :key="index">
-            <v-list-item-title>{{ "Level " + name }}</v-list-item-title>
-            <v-list-item-group :value="true">
-              <v-list-item v-html="getRights(value)"> </v-list-item>
-              <v-list-item v-html="getFails(value)"> </v-list-item>
-            </v-list-item-group>
-          </div>
-        </v-list>
+        </v-btn>
       </v-col>
 
       <v-col cols="8" class="d-flex bg-grey-lighten-3">
@@ -56,7 +62,7 @@ export default {
   computed: {
     getTitle() {
       if (this.selectedGame === null) {
-        return "Finde ... in den Kucha-Gemälden";
+        return "Finde die Figuren in den Kucha-Gemälden!";
       } else {
         return (
           "Finde <span style='color:red;''>" +
